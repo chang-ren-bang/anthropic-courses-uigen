@@ -19,9 +19,6 @@ export async function POST(req: Request) {
   messages.unshift({
     role: "system",
     content: generationPrompt,
-    providerOptions: {
-      anthropic: { cacheControl: { type: "ephemeral" } },
-    },
   });
 
   // Reconstruct the VirtualFileSystem from serialized data
@@ -30,11 +27,11 @@ export async function POST(req: Request) {
 
   const model = getLanguageModel();
   // Use fewer steps for mock provider to prevent repetition
-  const isMockProvider = !process.env.ANTHROPIC_API_KEY;
+  const isMockProvider = !process.env.AWS_ACCESS_KEY_ID;
   const result = streamText({
     model,
     messages,
-    maxTokens: 10_000,
+    maxTokens: 4_000,
     maxSteps: isMockProvider ? 4 : 40,
     onError: (err: any) => {
       console.error(err);

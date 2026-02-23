@@ -1,11 +1,12 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { bedrock } from "@ai-sdk/amazon-bedrock";
 import {
   LanguageModelV1,
   LanguageModelV1StreamPart,
   LanguageModelV1Message,
 } from "@ai-sdk/provider";
 
-const MODEL = "claude-haiku-4-5";
+// Claude 3 Haiku - uses inference profile for on-demand throughput
+const MODEL = "apac.anthropic.claude-3-haiku-20240307-v1:0";
 
 export class MockLanguageModel implements LanguageModelV1 {
   readonly specificationVersion = "v1" as const;
@@ -139,7 +140,7 @@ export class MockLanguageModel implements LanguageModelV1 {
 
     // Step 3: Create App.jsx
     if (toolMessageCount === 0) {
-      const text = `This is a static response. You can place an Anthropic API key in the .env file to use the Anthropic API for component generation. Let me create an App.jsx file to display the component.`;
+      const text = `This is a static response. You can configure AWS Bedrock credentials in the .env file to use Claude AI for component generation. Let me create an App.jsx file to display the component.`;
       for (const char of text) {
         yield { type: "text-delta", textDelta: char };
         await this.delay(15);
@@ -507,12 +508,18 @@ export default function App() {
 }
 
 export function getLanguageModel() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const region = process.env.AWS_REGION;
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-  if (!apiKey || apiKey.trim() === "") {
-    console.log("No ANTHROPIC_API_KEY found, using mock provider");
+  if (!region || !accessKeyId || !secretAccessKey) {
+    console.log("No AWS Bedrock credentials found, using mock provider");
     return new MockLanguageModel("mock-claude-sonnet-4-0");
   }
 
-  return anthropic(MODEL);
+  return bedrock(MODEL, {
+    region,
+    accessKeyId,
+    secretAccessKey,
+  });
 }
